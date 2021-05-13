@@ -1,51 +1,68 @@
 const storiesContainer = document.getElementById('stories');
-const gif = document.querySelector('.loading');
-async function getStories() {
+const loading = document.querySelector('.loading');
+let stories = [];
+
+function showLoading() {
+  loading.classList.add('show');
+  setTimeout(getStory, 1000, stories[0]);
+}
+
+async function getIds() {
   const response = await fetch(
     'https://hacker-news.firebaseio.com/v0/newstories.json'
   );
+  const data = await response.json();
 
-  const ids = await response.json();
-  let count = ids.length;
-  await ids.map(async (story) => {
-    const data = await fetch(
-      `https://hacker-news.firebaseio.com/v0/item/${story}.json?print=pretty`
-    );
-    const newStory = await data.json();
+  for (let i = 0; i < data.length; i++) {
+    stories.push(data[i]);
+  }
 
-    const div = document.createElement('div');
-    div.classList.add('stories__item');
-    div.innerHTML = `${count}.<span class="upvote">▲</span> <a class="stories__itemLink" href="${
-      newStory.url
-    }">${newStory.title}</a>
-    <p class="stories__itemText">${getPoints(newStory.score)} by ${
-      newStory.by
-    } ${new Date(newStory.time)} minutes ago</p>`;
-    storiesContainer.prepend(div);
-    count--;
-  });
-  gif.classList.add('hidden');
-  storiesContainer.classList.remove('hidden');
+  for (let i = 0; i < 30; i++) {
+    getStory(stories[0]);
+    stories.splice(0, 1);
+  }
 }
-getStories();
+
+async function getStory(id) {
+  let response = await fetch(
+    `https://hacker-news.firebaseio.com/v0/item/${id}.json?print=pretty`
+  );
+  let data = await response.json();
+  stories.splice(0, 1);
+
+  addDataToDOM(data);
+}
+
+function addDataToDOM(data) {
+  const postElement = document.createElement('div');
+  postElement.classList.add('stories__item');
+  postElement.innerHTML = `
+  <span class="upvote">▲</span>
+  <a class="stories__itemLink" href="${data.url}">${data.title}</a>
+  <p class="stories__itemText">${getPoints(data.score)} by ${
+    data.by
+  } on ${new Date(data.time)}</p>`;
+  storiesContainer.appendChild(postElement);
+  loading.classList.remove('show');
+}
 
 function getPoints(num) {
   switch (num) {
-    case num === 0:
+    case 0:
       return `${num} points`;
-    case num === 1:
+    case 1:
       return `${num} point`;
     default:
       return `${num} points`;
   }
 }
 
-function timestampToDate(time) {
-  const date = new Date(time * 1000);
-  const hours = date.getHours();
-  const minutes = '0' + date.getMinutes();
-  const seconds = '0' + date.getSeconds();
-  const formattedTime =
-    hours + ':' + minutes.substr(-2) + ':' + seconds.substr(-2);
-  return formattedTime;
-}
+window.addEventListener('scroll', () => {
+  const { scrollTop, scrollHeight, clientHeight } = document.documentElement;
+
+  if (clientHeight + scrollTop >= scrollHeight - 5) {
+    showLoading();
+  }
+});
+
+getIds();

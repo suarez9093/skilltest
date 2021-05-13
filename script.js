@@ -1,62 +1,69 @@
-// we will add this content, replace for anything you want to add
-let wrapper = document.getElementById('wrapper');
-let content = document.getElementById('content');
-let test = document.getElementById('test');
+const container = document.getElementById('container');
+const loading = document.querySelector('.loading');
 let stories = [];
 
-var more = '<div style="height:1000px; background:#EEE;"></div>';
-console.dir(wrapper);
-// this is the scroll event handler
-function scroller() {
-  // print relevant scroll info
-  test.innerHTML =
-    wrapper.scrollTop +
-    ' + ' +
-    wrapper.offsetHeight +
-    ' + 100 > ' +
-    content.offsetHeight;
+window.addEventListener('scroll', () => {
+  const { scrollTop, scrollHeight, clientHeight } = document.documentElement;
 
-  // add more contents if user scrolled down enough
-  if (wrapper.scrollTop + wrapper.offsetHeight + 100 > content.offsetHeight) {
-    content.innerHTML += more; // NK: Here you can make an Ajax call and fetch content to append to content.innerHTML
+  console.log({ scrollTop, scrollHeight, clientHeight });
+
+  if (clientHeight + scrollTop >= scrollHeight - 5) {
+    // show the loading animation
+    showLoading();
   }
+});
+
+function showLoading() {
+  loading.classList.add('show');
+
+  // load more data
+  setTimeout(getStory, 1000, stories[0]);
 }
 
-content.innerHTML = more;
-
-// hook the scroll handler to scroll event
-if (wrapper.addEventListener)
-  // NK: Works on all new browsers
-  wrapper.addEventListener('scroll', scroller, false);
-else if (wrapper.attachEvent)
-  // NK: Works on old IE
-  wrapper.attachEvent('onscroll', scroller);
-
-async function getStories() {
-  let loading = false;
+async function getIds() {
   const response = await fetch(
     'https://hacker-news.firebaseio.com/v0/newstories.json'
   );
+  const data = await response.json();
 
-  const ids = await response.json();
-  ids.map(async (story) => {
-    const data = await fetch(
-      `https://hacker-news.firebaseio.com/v0/item/${story}.json?print=pretty`
-    );
-    let newStory = await data.json();
-    stories.push(newStory);
+  for (let i = 0; i < data.length; i++) {
+    stories.push(data[i]);
+  }
+  getStory(stories[0]);
+  stories.splice(0, 1);
 
-    // const storiesContainer = document.getElementById('stories');
-    // const div = document.createElement('div');
-    // div.classList.add('stories__item');
-    // div.innerHTML = `${count}.<span class="upvote">▲</span> <a class="stories__itemLink" href="${
-    //   newStory.url
-    // }">${newStory.title}</a>
-    // <p class="stories__itemText">${getPoints(newStory.score)} by ${
-    //   newStory.by
-    // } ${new Date(newStory.time)} minutes ago</p>`;
-    // storiesContainer.prepend(div);
-    // count--;
-  });
+  getStory(stories[0]);
+  stories.splice(0, 1);
+
+  getStory(stories[0]);
+  stories.splice(0, 1);
+
+  getStory(stories[0]);
 }
-getStories();
+
+async function getStory(id) {
+  let response = await fetch(
+    `https://hacker-news.firebaseio.com/v0/item/${id}.json?print=pretty`
+  );
+  let data = await response.json();
+  stories.splice(0, 1);
+
+  addDataToDOM(data);
+}
+
+function addDataToDOM(data) {
+  const postElement = document.createElement('div');
+  postElement.classList.add('blog-post');
+  postElement.innerHTML = `
+  		<h2 class="title">${data.title}</h2>
+  		<p class="text">${data.url}</p>
+  		<div class="user-info">
+  			<span>${data.by}</span>
+  		</div>
+  	`;
+  container.appendChild(postElement);
+
+  loading.classList.remove('show');
+}
+
+getIds();
