@@ -4,21 +4,24 @@ async function getStories() {
   );
 
   const ids = await response.json();
-
+  let count = ids.length;
   ids.map(async (story) => {
     const data = await fetch(
       `https://hacker-news.firebaseio.com/v0/item/${story}.json?print=pretty`
     );
     const newStory = await data.json();
-    console.log('newStory ', newStory);
+
     const storiesContainer = document.getElementById('stories');
     const div = document.createElement('div');
     div.classList.add('stories__item');
-    div.innerHTML = `<p>${newStory.title}</p>
-    <p>${getPoints(newStory.score)} by ${newStory.by} ${
-      newStory.time
-    } minutes ago</p>`;
-    storiesContainer.appendChild(div);
+    div.innerHTML = `${count}.<span class="upvote">▲</span> <a class="stories__itemLink" href="${
+      newStory.url
+    }">${newStory.title}</a>
+    <p class="stories__itemText">${getPoints(newStory.score)} by ${
+      newStory.by
+    } ${new Date(newStory.time)} minutes ago</p>`;
+    storiesContainer.prepend(div);
+    count--;
   });
 }
 getStories();
@@ -32,4 +35,14 @@ function getPoints(num) {
     default:
       return `${num} points`;
   }
+}
+
+function timestampToDate(time) {
+  const date = new Date(time * 1000);
+  const hours = date.getHours();
+  const minutes = '0' + date.getMinutes();
+  const seconds = '0' + date.getSeconds();
+  const formattedTime =
+    hours + ':' + minutes.substr(-2) + ':' + seconds.substr(-2);
+  return formattedTime;
 }
