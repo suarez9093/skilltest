@@ -1,3 +1,5 @@
+const storiesContainer = document.getElementById('stories');
+const gif = document.querySelector('.loading');
 async function getStories() {
   const response = await fetch(
     'https://hacker-news.firebaseio.com/v0/newstories.json'
@@ -5,13 +7,12 @@ async function getStories() {
 
   const ids = await response.json();
   let count = ids.length;
-  ids.map(async (story) => {
+  await ids.map(async (story) => {
     const data = await fetch(
       `https://hacker-news.firebaseio.com/v0/item/${story}.json?print=pretty`
     );
     const newStory = await data.json();
 
-    const storiesContainer = document.getElementById('stories');
     const div = document.createElement('div');
     div.classList.add('stories__item');
     div.innerHTML = `${count}.<span class="upvote">▲</span> <a class="stories__itemLink" href="${
@@ -23,6 +24,8 @@ async function getStories() {
     storiesContainer.prepend(div);
     count--;
   });
+  gif.classList.add('hidden');
+  storiesContainer.classList.remove('hidden');
 }
 getStories();
 

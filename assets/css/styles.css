@@ -20,6 +20,18 @@ p {
   margin: 0;
 }
 
+.show {
+  display: block;
+}
+.loading {
+  width: 100px;
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+.hidden {
+  display: none;
+}
 /* 
 Layout
 ================================================================
